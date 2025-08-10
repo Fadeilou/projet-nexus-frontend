@@ -35,6 +35,50 @@ export interface MovieResponse {
   total_results: number;
 }
 
+export interface MovieDetails {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  vote_average: number;
+  vote_count: number;
+  genres: Genre[];
+  genre_ids: number[];
+  runtime: number;
+  original_language: string;
+  original_title: string;
+  adult: boolean;
+  popularity: number;
+  video: boolean;
+  credits: {
+    cast: CastMember[];
+    crew: CrewMember[];
+  };
+  videos: Videos;
+  reviews: Reviews;
+  similar: MovieResponse;
+  recommendations: MovieResponse;
+  is_favorite?: boolean;
+  user_rating?: number;
+  our_avg_rating?: number;
+  our_rating_count?: number;
+  our_reviews?: UserReview[];
+  budget: number;
+  revenue: number;
+  spoken_languages: Array<{
+    iso_639_1: string;
+    name: string;
+  }>;
+  production_companies: Array<{
+    id: number;
+    name: string;
+    logo_path: string | null;
+  }>;
+  tagline?: string;
+}
+
 // Genre Types
 export interface Genre {
   id: number;
@@ -114,10 +158,19 @@ export interface User {
 }
 
 export interface UserProfile {
+  id: number;
   user: User;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  bio?: string;
+  date_joined: string;
   preferred_genres: number[];
   favorite_actors: number[];
   preferred_languages: string[];
+  favorites_count: number;
+  ratings_count: number;
+  reviews_count: number;
   created_at: string;
   updated_at: string;
 }

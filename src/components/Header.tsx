@@ -69,7 +69,7 @@ const Header: React.FC = () => {
       setIsSearching(true);
       searchTimeoutRef.current = setTimeout(async () => {
         try {
-          const response = await apiService.searchMovies({ query, page: '1' });
+          const response = await apiService.searchMovies({ query, page: 1 });
           setSearchResults(response.results.slice(0, 8)); // Show max 8 results
           setShowSearchResults(true);
           setIsSearching(false);

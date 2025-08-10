@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -16,14 +15,41 @@ import {
   Award,
   TrendingUp
 } from 'lucide-react';
-import { Movie, Person, Video } from '@/types';
+import { Movie, Person, Video, Genre, CastMember, CrewMember, Videos, Reviews, MovieResponse, UserReview } from '@/types';
 import { useAuthStore, useAppStore } from '@/store';
 import MovieCard from '@/components/MovieCard';
 import apiService from '@/services/api';
 import toast from 'react-hot-toast';
 
-interface MovieDetails extends Movie {
+interface MovieDetails {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  vote_average: number;
+  vote_count: number;
+  genres?: Genre[];
   runtime: number;
+  original_language: string;
+  original_title: string;
+  adult: boolean;
+  popularity: number;
+  video: boolean;
+  credits?: {
+    cast: CastMember[];
+    crew: CrewMember[];
+  };
+  videos?: Videos;
+  reviews?: Reviews;
+  similar?: MovieResponse;
+  recommendations?: MovieResponse;
+  is_favorite?: boolean;
+  user_rating?: number;
+  our_avg_rating?: number;
+  our_rating_count?: number;
+  our_reviews?: UserReview[];
   budget: number;
   revenue: number;
   spoken_languages: Array<{
@@ -35,19 +61,7 @@ interface MovieDetails extends Movie {
     name: string;
     logo_path: string | null;
   }>;
-  credits: {
-    cast: Person[];
-    crew: Person[];
-  };
-  videos: {
-    results: Video[];
-  };
-  similar: {
-    results: Movie[];
-  };
-  recommendations: {
-    results: Movie[];
-  };
+  tagline?: string;
 }
 
 const MovieDetailPage: React.FC = () => {
@@ -77,13 +91,13 @@ const MovieDetailPage: React.FC = () => {
       
       // Load basic movie details
       const movieDetails = await apiService.getMovieDetails(movieId);
-      setMovie(movieDetails);
+      setMovie(movieDetails as MovieDetails);
       
       // Load AI-powered recommendations if user is authenticated
       if (isAuthenticated) {
         try {
           const recommendations = await apiService.getMovieRecommendations(movieId);
-          setAiRecommendations(recommendations);
+          setAiRecommendations(recommendations.recommendations);
         } catch (error) {
           console.error('Failed to load AI recommendations:', error);
         }
@@ -110,8 +124,24 @@ const MovieDetailPage: React.FC = () => {
         removeFromFavorites(movieId);
         toast.success('Removed from favorites');
       } else {
-        await apiService.addToFavorites(movie!);
-        addToFavorites(movie!);
+        const movieToAdd: Movie = {
+          id: movie!.id,
+          title: movie!.title,
+          overview: movie!.overview,
+          poster_path: movie!.poster_path,
+          backdrop_path: movie!.backdrop_path,
+          release_date: movie!.release_date,
+          vote_average: movie!.vote_average,
+          vote_count: movie!.vote_count,
+          genre_ids: movie!.genres ? movie!.genres.map(g => g.id) : [],
+          original_language: movie!.original_language,
+          original_title: movie!.original_title,
+          adult: movie!.adult,
+          popularity: movie!.popularity,
+          video: movie!.video,
+        };
+        await apiService.addToFavorites(movieToAdd);
+        addToFavorites(movieToAdd);
         toast.success('Added to favorites');
       }
     } catch (error) {
@@ -126,8 +156,24 @@ const MovieDetailPage: React.FC = () => {
     }
 
     try {
-      await apiService.addToWatchlist(movie!);
-      addToWatchlist(movie!);
+        const movieToAdd: Movie = {
+          id: movie!.id,
+          title: movie!.title,
+          overview: movie!.overview,
+          poster_path: movie!.poster_path,
+          backdrop_path: movie!.backdrop_path,
+          release_date: movie!.release_date,
+          vote_average: movie!.vote_average,
+          vote_count: movie!.vote_count,
+          genre_ids: movie!.genres ? movie!.genres.map(g => g.id) : [],
+          original_language: movie!.original_language,
+          original_title: movie!.original_title,
+          adult: movie!.adult,
+          popularity: movie!.popularity,
+          video: movie!.video,
+        };
+      await apiService.addToWatchlist(movieToAdd);
+      addToWatchlist(movieToAdd);
       toast.success('Added to watchlist');
     } catch (error) {
       toast.error('Failed to add to watchlist');
@@ -179,7 +225,7 @@ const MovieDetailPage: React.FC = () => {
     video.type === 'Trailer' && video.site === 'YouTube'
   );
 
-  const director = movie.credits?.crew?.find(person => person.job === 'Director');
+  const director = movie.credits?.crew?.find((person: CrewMember) => person.job === 'Director');
   const mainCast = movie.credits?.cast?.slice(0, 10) || [];
 
   return (
@@ -299,6 +345,16 @@ const MovieDetailPage: React.FC = () => {
                     <Plus className="h-5 w-5" />
                     <span>Add to Watchlist</span>
                   </button>
+
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => router.push(`/review/${movie.id}`)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors"
+                    >
+                      <Star className="h-5 w-5" />
+                      <span>Rate & Review</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -402,7 +458,7 @@ const MovieDetailPage: React.FC = () => {
                 <div
                   key={person.id}
                   className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/actor/${person.id}`)}
+                  onClick={() => router.push(`/person/${person.id}`)}
                 >
                   <img
                     src={apiService.getProfileUrl(person.profile_path, 'w185')}
@@ -423,7 +479,7 @@ const MovieDetailPage: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold mb-6">Videos</h2>
             
-            {movie.videos?.results?.length > 0 ? (
+                        {movie.videos && movie.videos.results && movie.videos.results.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {movie.videos.results.slice(0, 6).map((video) => (
                   <div key={video.id} className="bg-gray-800 rounded-lg overflow-hidden">
@@ -474,7 +530,7 @@ const MovieDetailPage: React.FC = () => {
             )}
 
             {/* Similar Movies */}
-            {movie.similar?.results?.length > 0 && (
+                        {movie.similar && movie.similar.results && movie.similar.results.length > 0 && (
               <div>
                 <h2 className="text-2xl font-bold mb-6">Similar Movies</h2>
                 
@@ -491,7 +547,7 @@ const MovieDetailPage: React.FC = () => {
             )}
 
             {/* TMDb Recommendations */}
-            {movie.recommendations?.results?.length > 0 && (
+                        {movie.recommendations && movie.recommendations.results && movie.recommendations.results.length > 0 && (
               <div>
                 <h2 className="text-2xl font-bold mb-6">You Might Also Like</h2>
                 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { 
   Search, 
   Filter, 
@@ -54,7 +54,7 @@ const SORT_OPTIONS = [
   { value: 'release_date.asc', label: 'Oldest First' },
 ];
 
-const SearchPage: React.FC = () => {
+const SearchPageContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToRecentlyViewed } = useAppStore();
@@ -154,8 +154,8 @@ const SearchPage: React.FC = () => {
     performSearch(clearedFilters);
   };
 
-  const handleMovieClick = (movie: Movie) => {
-    addToRecentlyViewed(movie);
+  const handleMovieClick = (movie: Partial<Movie>) => {
+    addToRecentlyViewed(movie as Movie);
     router.push(`/movie/${movie.id}`);
   };
 
@@ -421,6 +421,14 @@ const SearchPage: React.FC = () => {
         ) : null}
       </div>
     </div>
+  );
+};
+
+const SearchPage: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 };
 

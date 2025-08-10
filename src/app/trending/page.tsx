@@ -85,15 +85,15 @@ const TrendingPage: React.FC = () => {
 
   const loadPersonalizedRecommendations = async () => {
     try {
-      const recommendations = await apiService.getRecommendations('mixed', 20);
-      setPersonalizedRecs(recommendations);
+      const recommendations = await apiService.getUserRecommendations('hybrid', 20);
+      setPersonalizedRecs(recommendations.movies);
     } catch (error) {
       console.error('Failed to load personalized recommendations:', error);
     }
   };
 
-  const handleMovieClick = (movie: Movie) => {
-    addToRecentlyViewed(movie);
+  const handleMovieClick = (movie: Partial<Movie>) => {
+    addToRecentlyViewed(movie as Movie);
     router.push(`/movie/${movie.id}`);
   };
 

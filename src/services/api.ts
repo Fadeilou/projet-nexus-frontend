@@ -16,7 +16,8 @@ import {
   AuthTokens,
   RecommendationResponse,
   MovieRecommendationResponse,
-  ApiError
+  ApiError,
+  MovieDetails,
 } from '@/types';
 
 class ApiService {
@@ -191,9 +192,9 @@ class ApiService {
     }
   }
 
-  async getMovieDetails(movieId: number): Promise<Movie> {
+  async getMovieDetails(movieId: number): Promise<MovieDetails> {
     try {
-      const response = await this.api.get(`/movies/${movieId}/`);
+      const response = await this.api.get(`/movies/${movieId}/?append_to_response=credits,videos,reviews,similar,recommendations`);
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);
@@ -329,6 +330,15 @@ class ApiService {
     } catch (error: any) {
       throw this.handleError(error);
     }
+  }
+
+  // Alias methods for compatibility
+  async submitRating(data: { movie_id: number; rating: number }): Promise<UserRating> {
+    return this.rateMovie(data.movie_id, data.rating);
+  }
+
+  async submitReview(data: { movie_id: number; review: string; is_spoiler?: boolean }): Promise<UserReview> {
+    return this.addReview(data.movie_id, data.review, data.is_spoiler || false);
   }
 
   // Recommendations Methods
